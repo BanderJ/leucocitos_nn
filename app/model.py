@@ -1,16 +1,19 @@
+import os
 import tensorflow as tf
 from flask import current_app
 
 _model = None
-_class_names = None
+_class_names = ['Basophil','Eosinophil','Lymphocyte','Monocyte','Neutrophil']
 
 def load_model():
-    global _model, _class_names
+    global _model
     if _model is None:
-        # Ruta al modelo preentrenado guardado tras entrenamiento
-        _model = tf.keras.models.load_model('best_model.h5')
-        # Asegúrate de que el orden coincide con test_ds.class_indices
-        _class_names = ['Basofilo','Eosinofilo','Linfocito','Monocito','Neutrofilos']
+        # Ruta absoluta a tu modelo entrenado
+        model_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'models', 'best_model.h5'
+        )
+        _model = tf.keras.models.load_model(model_path)
     return _model
 
 def predict(image_array):
@@ -18,3 +21,4 @@ def predict(image_array):
     preds = model.predict(image_array)[0]
     idx = preds.argmax()
     return _class_names[idx], float(preds[idx])
+
