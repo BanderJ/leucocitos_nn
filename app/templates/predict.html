@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="result">
+    <h2>Resultado:</h2>
+    <p><strong>Clase:</strong> {{ clase }}</p>
+    <p><strong>Confianza:</strong> {{ (confianza*100)|round(2) }} %</p>
+    <img src="{{ url_for('static', filename='../uploads/' + filename) }}" alt="imagen subida">
+    <a href="{{ url_for('main.index') }}">Volver</a>
+  </div>
+{% endblock %}

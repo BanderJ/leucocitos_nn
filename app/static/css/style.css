@@ -1,0 +1,7 @@
+body { font-family: Arial, sans-serif; padding: 2rem; background: #f5f5f5; }
+.container { background: #fff; padding: 2rem; border-radius: 8px; max-width: 500px; margin: auto; }
+button { padding: 0.5rem 1rem; }
+.result img { max-width: 100%; margin-top: 1rem; }
+.alert { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; }
+.alert-warning { background: #fff3cd; }
+.alert-danger  { background: #f8d7da; }

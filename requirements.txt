@@ -1,0 +1,8 @@
+Flask>=2.2
+tensorflow-cpu>=2.11
+numpy
+scikit-learn
+Pillow
+gunicorn   
+
+
