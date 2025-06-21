@@ -7,7 +7,7 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
     # Carpeta de uploads: ../uploads respecto a app/
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, os.pardir, 'uploads')
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, os.pardir, 'app/static/uploads')
 
     # Extensiones permitidas para subida
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}

@@ -1,9 +1,6 @@
-tensorflow-cpu>=2.11
+tensorflow-cpu==2.11.*
 h5py
 scikit-learn
 Pillow
 Flask>=2.2
-numpy
-
-
-
+numpy==1.23.5
