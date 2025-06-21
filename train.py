@@ -5,7 +5,7 @@ import tensorflow as tf
 
 # 1. Directorios
 BASE_DIR = os.getcwd()                     # e.g. C:\Users\ander\Downloads\leucocitos_nn
-TRAIN_DIR = os.path.join(BASE_DIR, 'dataset', 'Train')
+TRAIN_DIR = '/content/drive/MyDrive/dataset/Train'
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 os.makedirs(MODELS_DIR, exist_ok=True)
 
