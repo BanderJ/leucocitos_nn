@@ -23,11 +23,12 @@ def index():
             file.save(upload_path)
 
             img_arr = load_and_prep_image(upload_path)
-            clase, confianza = predict(img_arr)
+            clase, confianza, preds = predict(img_arr)
             return render_template('predict.html',
-                                   filename=filename,
-                                   clase=clase,
-                                   confianza=confianza)
+                                filename=filename,
+                                clase=clase,
+                                confianza=confianza,
+                                all_preds=preds)
 
         flash('Tipo de archivo no permitido', 'danger')
         return redirect(request.url)

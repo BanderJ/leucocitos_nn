@@ -13,5 +13,5 @@ class Config:
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
     # Tamaño en píxeles al que redimensionar las imágenes (ancho, alto)
-    IMG_SIZE = (575, 575)
+    IMG_SIZE = (575,575)
 

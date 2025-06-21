@@ -10,7 +10,7 @@ MODELS_DIR = os.path.join(BASE_DIR, 'models')
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # 2. Parámetros
-IMG_SIZE = (575, 575)
+IMG_SIZE = (575,575)
 BATCH = 32
 EPOCHS = 1
 NUM_CLASSES = 5

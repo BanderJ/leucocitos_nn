@@ -1,10 +1,530 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="result">
-    <h2>Resultado:</h2>
-    <p><strong>Clase:</strong> {{ clase }}</p>
-    <p><strong>Confianza:</strong> {{ (confianza*100)|round(2) }} %</p>
-    <img src="{{ url_for('static', filename='../uploads/' + filename) }}" alt="imagen subida">
-    <a href="{{ url_for('main.index') }}">Volver</a>
+  <style>
+    .result-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      animation: fadeInUp 0.6s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .result-title {
+      color: #2c3e50;
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .main-result {
+      text-align: center;
+      background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(46, 204, 113, 0.1));
+      border: 2px solid rgba(39, 174, 96, 0.3);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 30px 0;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+    }
+
+    .predicted-class {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #27ae60;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .confidence-score {
+      font-size: 1.5rem;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    .confidence-bar {
+      width: 100%;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+      border-radius: 10px;
+      transition: width 2s ease;
+      position: relative;
+    }
+
+    .confidence-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .details-section {
+      margin: 40px 0;
+    }
+
+    .details-title {
+      color: #2c3e50;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .predictions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .prediction-item {
+      background: rgba(102, 126, 234, 0.05);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prediction-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    }
+
+    .prediction-item.highest {
+      background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(46, 204, 113, 0.1));
+      border-color: rgba(39, 174, 96, 0.4);
+      transform: scale(1.02);
+    }
+
+    .cell-type {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+
+    .cell-percentage {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .prediction-item.highest .cell-percentage {
+      color: #27ae60;
+    }
+
+    .mini-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 3px;
+      transition: width 1.5s ease;
+    }
+
+    .prediction-item.highest .mini-bar-fill {
+      background: linear-gradient(90deg, #27ae60, #2ecc71);
+    }
+
+    .image-section {
+      text-align: center;
+      margin: 40px 0;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 15px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .image-title {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .result-image {
+      max-width: 100%;
+      max-height: 400px;
+      width: auto;
+      height: auto;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .result-image:hover {
+      transform: scale(1.02);
+    }
+
+    .image-container {
+      position: relative;
+      display: inline-block;
+      margin: 20px 0;
+    }
+
+    .image-overlay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .actions-section {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .back-btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      text-decoration: none;
+      padding: 15px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      display: inline-block;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .back-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+      text-decoration: none;
+      color: white;
+    }
+
+    .back-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .additional-actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 10px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .action-btn:hover {
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+
+    .emoji-icon {
+      font-size: 1.5rem;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .result-container {
+        padding: 25px 20px;
+        margin: 10px;
+      }
+
+      .result-title {
+        font-size: 1.8rem;
+      }
+
+      .predicted-class {
+        font-size: 1.5rem;
+      }
+
+      .confidence-score {
+        font-size: 1.2rem;
+      }
+
+      .predictions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-image {
+        max-height: 300px;
+      }
+
+      .additional-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* Modal para imagen ampliada */
+    .image-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(5px);
+    }
+
+    .image-modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 10px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 3rem;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    .close-modal:hover {
+      opacity: 0.7;
+    }
+  </style>
+
+  <div class="result-container">
+    <div class="result-header">
+      <h2 class="result-title">🔬 Resultado del Análisis</h2>
+    </div>
+
+    <div class="main-result">
+      <div class="predicted-class">{{ clase }}</div>
+      <div class="confidence-score">{{ (confianza*100)|round(2) }}% de confianza</div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: {{ (confianza*100)|round(2) }}%"></div>
+      </div>
+    </div>
+
+    <div class="details-section">
+      <h3 class="details-title">📊 Distribución de Probabilidades</h3>
+      <div class="predictions-grid">
+        {% set class_names = ['Basophil','Eosinophil','Lymphocyte','Monocyte','Neutrophil'] %}
+        {% set class_emojis = ['🔵','🔴','🟣','🟡','🟠'] %}
+        {% for i in range(all_preds|length) %}
+          <div class="prediction-item {% if class_names[i] == clase %}highest{% endif %}">
+            <div class="cell-type">
+              <span class="emoji-icon">{{ class_emojis[i] }}</span>
+              {{ class_names[i] }}
+            </div>
+            <div class="cell-percentage">{{ (all_preds[i]*100)|round(2) }}%</div>
+            <div class="mini-bar">
+              <div class="mini-bar-fill" style="width: {{ (all_preds[i]*100)|round(2) }}%"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="image-section">
+      <h3 class="image-title">🖼️ Imagen Analizada</h3>
+      <div class="image-container">
+        <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
+             alt="Imagen de leucocito analizada" 
+             class="result-image"
+             id="resultImage">
+        <div class="image-overlay">{{ clase }}</div>
+      </div>
+      <p style="color: #7f8c8d; margin-top: 15px; font-size: 0.9rem;">
+        Haz clic en la imagen para ampliarla
+      </p>
+    </div>
+
+    <div class="actions-section">
+      <a href="{{ url_for('main.index') }}" class="back-btn">
+        🏠 Analizar Nueva Imagen
+      </a>
+      
+      <div class="additional-actions">
+        <a href="#" class="action-btn" onclick="downloadResult()">
+          💾 Descargar Resultado
+        </a>
+        <a href="#" class="action-btn" onclick="shareResult()">
+          📤 Compartir
+        </a>
+      </div>
+    </div>
   </div>
+
+  <!-- Modal para imagen ampliada -->
+  <div class="image-modal" id="imageModal">
+    <span class="close-modal" id="closeModal">&times;</span>
+    <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
+         alt="Imagen ampliada" 
+         class="modal-image">
+  </div>
+
+  <script>
+    // Animación de las barras de progreso
+    document.addEventListener('DOMContentLoaded', function() {
+      const bars = document.querySelectorAll('.mini-bar-fill');
+      bars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+          bar.style.width = width;
+        }, 500);
+      });
+
+      // Animación de la barra de confianza principal
+      const mainBar = document.querySelector('.confidence-fill');
+      const width = mainBar.style.width;
+      mainBar.style.width = '0%';
+      setTimeout(() => {
+        mainBar.style.width = width;
+      }, 800);
+    });
+
+    // Modal de imagen
+    const resultImage = document.getElementById('resultImage');
+    const imageModal = document.getElementById('imageModal');
+    const closeModal = document.getElementById('closeModal');
+
+    resultImage.addEventListener('click', function() {
+      imageModal.classList.add('show');
+    });
+
+    closeModal.addEventListener('click', function() {
+      imageModal.classList.remove('show');
+    });
+
+    imageModal.addEventListener('click', function(e) {
+      if (e.target === imageModal) {
+        imageModal.classList.remove('show');
+      }
+    });
+
+    // Funciones adicionales
+    function downloadResult() {
+      const resultData = {
+        clase: '{{ clase }}',
+        confianza: {{ confianza }},
+        timestamp: new Date().toISOString()
+      };
+      
+      const dataStr = JSON.stringify(resultData, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `resultado_leucocitos_${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function shareResult() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Resultado Análisis de Leucocitos',
+          text: `Resultado: {{ clase }} con {{ (confianza*100)|round(2) }}% de confianza`,
+          url: window.location.href
+        });
+      } else {
+        // Fallback para navegadores que no soportan Web Share API
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+          alert('¡Enlace copiado al portapapeles!');
+        });
+      }
+    }
+
+    // Efectos de teclado para el modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && imageModal.classList.contains('show')) {
+        imageModal.classList.remove('show');
+      }
+    });
+  </script>
 {% endblock %}
